@@ -3,273 +3,335 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Nifty 50 · Peak Tracker</title>
+<title>Nifty 50 · Index Tracker</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #0a0c0f;
-    --surface: #111418;
-    --border: #1e2530;
-    --accent: #f0c040;
-    --accent2: #4af0a0;
-    --red: #f05060;
-    --purple: #a78bfa;
-    --text: #e8eaf0;
-    --muted: #5a6070;
+    --bg:#0a0c0f; --surface:#111418; --border:#1e2530;
+    --accent:#f0c040; --green:#4af0a0; --red:#f05060;
+    --purple:#a78bfa; --text:#e8eaf0; --muted:#5a6070;
   }
-  * { margin:0; padding:0; box-sizing:border-box; }
-  body {
-    background: var(--bg); color: var(--text);
-    font-family: 'Syne', sans-serif;
-    min-height: 100vh; display: flex; flex-direction: column;
-    align-items: center; padding: 40px 20px; overflow-x: hidden;
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{
+    background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;
+    min-height:100vh;display:flex;flex-direction:column;align-items:center;
+    padding:36px 16px;overflow-x:hidden;
   }
-  body::before {
-    content:''; position:fixed; top:-200px; left:-200px;
-    width:600px; height:600px;
-    background: radial-gradient(circle, rgba(240,192,64,0.06) 0%, transparent 70%);
+  body::before{
+    content:'';position:fixed;top:-200px;left:-200px;width:600px;height:600px;
+    background:radial-gradient(circle,rgba(240,192,64,0.07) 0%,transparent 70%);
     pointer-events:none;
   }
-  body::after {
-    content:''; position:fixed; bottom:-100px; right:-100px;
-    width:400px; height:400px;
-    background: radial-gradient(circle, rgba(74,240,160,0.05) 0%, transparent 70%);
-    pointer-events:none;
-  }
-  header { text-align:center; margin-bottom:48px; animation: fadeDown 0.6s ease both; }
-  .logo { font-size:11px; font-family:'JetBrains Mono',monospace; letter-spacing:4px; color:var(--accent); text-transform:uppercase; margin-bottom:12px; }
-  h1 { font-size:clamp(2rem,6vw,3.5rem); font-weight:800; letter-spacing:-1px; line-height:1; }
-  h1 span { color:var(--accent); }
-  .subtitle { font-size:14px; color:var(--muted); margin-top:10px; font-family:'JetBrains Mono',monospace; }
 
-  .card-grid {
-    display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
-    gap:16px; width:100%; max-width:900px; margin-bottom:24px;
-    animation: fadeUp 0.6s 0.1s ease both;
-  }
-  .card {
-    background:var(--surface); border:1px solid var(--border);
-    border-radius:16px; padding:28px; position:relative; overflow:hidden;
-    transition:border-color 0.2s;
-  }
-  .card:hover { border-color:var(--accent); }
-  .card::before {
-    content:''; position:absolute; top:0; left:0; right:0; height:2px;
-    background:var(--card-accent, var(--border));
-  }
-  .card.current { --card-accent: var(--accent2); }
-  .card.high    { --card-accent: var(--accent); }
-  .card.low     { --card-accent: var(--purple); }
-  .card.current .card-value { color:var(--accent2); }
-  .card.high    .card-value { color:var(--accent); }
-  .card.low     .card-value { color:var(--purple); }
-  .card-label { font-size:10px; font-family:'JetBrains Mono',monospace; letter-spacing:3px; color:var(--muted); text-transform:uppercase; margin-bottom:14px; }
-  .card-value { font-size:clamp(1.8rem,4vw,2.4rem); font-weight:800; font-family:'JetBrains Mono',monospace; letter-spacing:-1px; line-height:1; }
-  .card-sub { font-size:12px; color:var(--muted); margin-top:8px; font-family:'JetBrains Mono',monospace; }
+  /* HEADER */
+  header{text-align:center;margin-bottom:36px;animation:fadeDown 0.5s ease both;}
+  .logo{font-size:10px;font-family:'JetBrains Mono',monospace;letter-spacing:4px;color:var(--accent);text-transform:uppercase;margin-bottom:8px;}
+  h1{font-size:clamp(1.8rem,5vw,3rem);font-weight:800;letter-spacing:-1px;line-height:1.1;}
+  h1 span{color:var(--accent);}
+  .subtitle{font-size:12px;color:var(--muted);margin-top:8px;font-family:'JetBrains Mono',monospace;}
 
-  .pct-row {
-    width:100%; max-width:900px; display:flex; align-items:center;
-    margin-bottom:24px; animation: fadeUp 0.6s 0.15s ease both;
-    background:var(--surface); border:1px solid var(--border);
-    border-radius:16px; overflow:hidden;
+  /* TOP 3 CARDS */
+  .card-grid{
+    display:grid;grid-template-columns:repeat(3,1fr);
+    gap:12px;width:100%;max-width:860px;margin-bottom:16px;
+    animation:fadeUp 0.5s 0.1s ease both;
   }
-  .pct-card { flex:1; padding:32px 28px; text-align:center; display:flex; flex-direction:column; align-items:center; gap:8px; }
-  .pct-card.pct-up  { border-right:1px solid var(--border); }
-  .pct-card.pct-down { border-left:1px solid var(--border); }
-  .pct-icon { font-size:20px; font-weight:800; }
-  .pct-up   .pct-icon { color:var(--accent2); }
-  .pct-down .pct-icon { color:var(--red); }
-  .pct-num { font-size:clamp(2.4rem,6vw,3.8rem); font-weight:800; font-family:'JetBrains Mono',monospace; letter-spacing:-2px; line-height:1; }
-  .pct-up   .pct-num { color:var(--accent2); }
-  .pct-down .pct-num { color:var(--red); }
-  .pct-desc { font-size:13px; color:var(--muted); font-family:'JetBrains Mono',monospace; }
-  .pct-desc strong { color:var(--text); }
-  .pct-divider { padding:20px 16px; text-align:center; flex-shrink:0; }
-  .pct-divider-label { font-size:9px; font-family:'JetBrains Mono',monospace; letter-spacing:2px; color:var(--muted); text-transform:uppercase; line-height:1.8; }
+  @media(max-width:600px){.card-grid{grid-template-columns:1fr;}}
+  .card{
+    background:var(--surface);border:1px solid var(--border);border-radius:14px;
+    padding:22px 20px;position:relative;overflow:hidden;transition:border-color 0.2s;
+  }
+  .card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--card-top);}
+  .card.c-current{--card-top:var(--green);}
+  .card.c-high{--card-top:var(--accent);}
+  .card.c-low{--card-top:var(--purple);}
+  .card-label{font-size:9px;font-family:'JetBrains Mono',monospace;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-bottom:10px;}
+  .card-value{font-size:clamp(1.4rem,3vw,2rem);font-weight:800;font-family:'JetBrains Mono',monospace;letter-spacing:-1px;}
+  .card.c-current .card-value{color:var(--green);}
+  .card.c-high .card-value{color:var(--accent);}
+  .card.c-low .card-value{color:var(--purple);}
+  .card-sub{font-size:11px;color:var(--muted);margin-top:6px;font-family:'JetBrains Mono',monospace;}
 
-  .progress-section {
-    width:100%; max-width:900px; background:var(--surface);
-    border:1px solid var(--border); border-radius:16px; padding:32px;
-    margin-bottom:24px; animation: fadeUp 0.6s 0.2s ease both;
+  /* BIG PCT SECTION */
+  .pct-section{
+    width:100%;max-width:860px;margin-bottom:16px;
+    display:grid;grid-template-columns:1fr 1fr;gap:12px;
+    animation:fadeUp 0.5s 0.15s ease both;
   }
-  .progress-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
-  .progress-title { font-size:12px; font-family:'JetBrains Mono',monospace; letter-spacing:3px; color:var(--muted); text-transform:uppercase; }
-  .progress-pct { font-size:28px; font-weight:800; font-family:'JetBrains Mono',monospace; color:var(--accent); }
-  .bar-bg { background:var(--border); border-radius:999px; height:14px; overflow:hidden; margin-bottom:12px; }
-  .bar-fill {
-    height:100%; border-radius:999px;
-    background:linear-gradient(90deg, var(--accent2), var(--accent));
-    transition:width 1.2s cubic-bezier(0.23,1,0.32,1); width:0%; position:relative;
-  }
-  .bar-fill::after { content:''; position:absolute; right:0; top:0; bottom:0; width:4px; background:white; border-radius:999px; opacity:0.8; }
-  .bar-labels { display:flex; justify-content:space-between; font-size:11px; font-family:'JetBrains Mono',monospace; color:var(--muted); }
+  @media(max-width:500px){.pct-section{grid-template-columns:1fr;}}
 
-  .insight {
-    width:100%; max-width:900px;
-    background:rgba(240,192,64,0.07); border:1px solid rgba(240,192,64,0.25);
-    border-radius:12px; padding:20px 24px; font-size:14px; line-height:1.7;
-    color:#c8c0a0; animation: fadeUp 0.6s 0.3s ease both;
+  .pct-box{
+    background:var(--surface);border:1px solid var(--border);
+    border-radius:14px;padding:28px 24px;text-align:center;
+    display:flex;flex-direction:column;align-items:center;gap:6px;
+    position:relative;overflow:hidden;
   }
-  .insight strong { color:var(--accent); }
+  .pct-box::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--box-top);}
+  .pct-box.box-up{--box-top:var(--green);}
+  .pct-box.box-down{--box-top:var(--red);}
 
-  .refresh-row { display:flex; align-items:center; gap:16px; margin-top:32px; animation: fadeUp 0.6s 0.4s ease both; }
-  button {
-    background:var(--accent); color:#0a0c0f; border:none; border-radius:8px;
-    padding:12px 28px; font-family:'Syne',sans-serif; font-weight:700;
-    font-size:14px; cursor:pointer; letter-spacing:1px;
-    transition:transform 0.15s, opacity 0.15s;
+  .pct-box-label{
+    font-size:9px;font-family:'JetBrains Mono',monospace;
+    letter-spacing:3px;color:var(--muted);text-transform:uppercase;
   }
-  button:hover { transform:translateY(-2px); opacity:0.9; }
-  button:active { transform:translateY(0); }
-  button:disabled { opacity:0.4; cursor:not-allowed; transform:none; }
-  .last-updated { font-size:11px; font-family:'JetBrains Mono',monospace; color:var(--muted); }
-  .spinner {
-    display:inline-block; width:16px; height:16px;
-    border:2px solid var(--border); border-top-color:var(--accent);
-    border-radius:50%; animation:spin 0.7s linear infinite;
-    vertical-align:middle; margin-right:6px;
-  }
-  .error-msg { color:var(--red); font-size:13px; font-family:'JetBrains Mono',monospace; margin-top:12px; display:none; }
-  .note { font-size:11px; color:var(--muted); text-align:center; margin-top:24px; font-family:'JetBrains Mono',monospace; line-height:1.8; }
+  .pct-arrow{font-size:18px;font-weight:800;margin:4px 0;}
+  .box-up .pct-arrow{color:var(--green);}
+  .box-down .pct-arrow{color:var(--red);}
 
-  @keyframes fadeDown { from{opacity:0;transform:translateY(-20px)} to{opacity:1;transform:none} }
-  @keyframes fadeUp   { from{opacity:0;transform:translateY(20px)}  to{opacity:1;transform:none} }
-  @keyframes spin     { to{transform:rotate(360deg)} }
+  .pct-big{
+    font-size:clamp(2.8rem,8vw,4.5rem);font-weight:800;
+    font-family:'JetBrains Mono',monospace;letter-spacing:-3px;line-height:1;
+  }
+  .box-up .pct-big{color:var(--green);}
+  .box-down .pct-big{color:var(--red);}
+
+  .pct-caption{font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;line-height:1.5;margin-top:4px;}
+  .pct-caption strong{color:var(--text);}
+
+  .pct-points{
+    font-size:13px;font-family:'JetBrains Mono',monospace;
+    padding:6px 14px;border-radius:999px;margin-top:6px;font-weight:600;
+  }
+  .box-up .pct-points{background:rgba(74,240,160,0.1);color:var(--green);}
+  .box-down .pct-points{background:rgba(240,80,96,0.1);color:var(--red);}
+
+  /* PROGRESS BAR */
+  .progress-section{
+    width:100%;max-width:860px;background:var(--surface);
+    border:1px solid var(--border);border-radius:14px;padding:24px;
+    margin-bottom:16px;animation:fadeUp 0.5s 0.2s ease both;
+  }
+  .prog-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+  .prog-title{font-size:9px;font-family:'JetBrains Mono',monospace;letter-spacing:3px;color:var(--muted);text-transform:uppercase;}
+  .prog-pct{font-size:22px;font-weight:800;font-family:'JetBrains Mono',monospace;color:var(--accent);}
+  .bar-bg{background:var(--border);border-radius:999px;height:12px;overflow:hidden;margin-bottom:10px;}
+  .bar-fill{
+    height:100%;border-radius:999px;
+    background:linear-gradient(90deg,var(--purple),var(--green),var(--accent));
+    transition:width 1.4s cubic-bezier(0.23,1,0.32,1);width:0%;
+  }
+  .bar-labels{display:flex;justify-content:space-between;font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--muted);}
+  .bar-labels span:nth-child(1){color:var(--purple);}
+  .bar-labels span:nth-child(3){color:var(--accent);}
+
+  /* INSIGHT */
+  .insight{
+    width:100%;max-width:860px;background:rgba(240,192,64,0.06);
+    border:1px solid rgba(240,192,64,0.2);border-radius:12px;
+    padding:18px 22px;font-size:14px;line-height:1.7;color:#c8c0a0;
+    margin-bottom:16px;animation:fadeUp 0.5s 0.25s ease both;
+  }
+  .insight strong{color:var(--accent);}
+
+  /* TODAY ROW */
+  .today-row{
+    width:100%;max-width:860px;
+    display:grid;grid-template-columns:repeat(4,1fr);gap:12px;
+    margin-bottom:16px;animation:fadeUp 0.5s 0.3s ease both;
+  }
+  @media(max-width:600px){.today-row{grid-template-columns:repeat(2,1fr);}}
+  .today-card{
+    background:var(--surface);border:1px solid var(--border);
+    border-radius:12px;padding:16px;text-align:center;
+  }
+  .today-label{font-size:9px;font-family:'JetBrains Mono',monospace;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:6px;}
+  .today-value{font-size:1rem;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--text);}
+
+  /* BOTTOM */
+  .bottom{display:flex;flex-direction:column;align-items:center;gap:10px;animation:fadeUp 0.5s 0.35s ease both;}
+  .refresh-row{display:flex;align-items:center;gap:14px;}
+  button{
+    background:var(--accent);color:#0a0c0f;border:none;border-radius:8px;
+    padding:11px 26px;font-family:'Syne',sans-serif;font-weight:700;font-size:14px;
+    cursor:pointer;letter-spacing:1px;transition:transform 0.15s,opacity 0.15s;
+  }
+  button:hover{transform:translateY(-2px);opacity:0.9;}
+  button:disabled{opacity:0.4;cursor:not-allowed;transform:none;}
+  .last-updated{font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--muted);}
+  .error-msg{color:var(--red);font-size:12px;font-family:'JetBrains Mono',monospace;display:none;text-align:center;max-width:500px;}
+  .source-badge{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--muted);padding:3px 10px;border:1px solid var(--border);border-radius:999px;display:none;}
+  .note{font-size:10px;color:var(--muted);text-align:center;margin-top:8px;font-family:'JetBrains Mono',monospace;line-height:1.8;}
+
+  .spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;margin-right:6px;}
+
+  @keyframes fadeDown{from{opacity:0;transform:translateY(-16px)}to{opacity:1;transform:none}}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+  @keyframes spin{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
 
 <header>
   <div class="logo">NSE · India · Live</div>
-  <h1>NIFTY <span>50</span><br>PEAK TRACKER</h1>
-  <p class="subtitle">Current Value vs. 52-Week High &amp; Low</p>
+  <h1>NIFTY <span>50</span> TRACKER</h1>
+  <p class="subtitle">Current · 52-Week High · 52-Week Low · % Change</p>
 </header>
 
+<!-- 3 VALUE CARDS -->
 <div class="card-grid">
-  <div class="card current">
+  <div class="card c-current">
     <div class="card-label">Current Value</div>
     <div class="card-value" id="cur-val">—</div>
     <div class="card-sub" id="cur-chg">Loading...</div>
   </div>
-  <div class="card high">
+  <div class="card c-high">
     <div class="card-label">52-Week High</div>
     <div class="card-value" id="high-val">—</div>
-    <div class="card-sub" id="high-sub">Loading...</div>
+    <div class="card-sub">yearly peak</div>
   </div>
-  <div class="card low">
+  <div class="card c-low">
     <div class="card-label">52-Week Low</div>
     <div class="card-value" id="low-val">—</div>
-    <div class="card-sub" id="low-sub">Loading...</div>
+    <div class="card-sub">yearly floor</div>
   </div>
 </div>
 
-<div class="pct-row">
-  <div class="pct-card pct-up">
-    <div class="pct-icon">↑</div>
-    <div class="pct-num" id="pct-from-low">—</div>
-    <div class="pct-desc">above 52-week <strong>low</strong></div>
+<!-- BIG PERCENTAGE BOXES -->
+<div class="pct-section">
+  <div class="pct-box box-up">
+    <div class="pct-box-label">vs 52-Week Low</div>
+    <div class="pct-arrow">↑</div>
+    <div class="pct-big" id="pct-low">—</div>
+    <div class="pct-caption">Current is this much <strong>above</strong><br>the 52-week low</div>
+    <div class="pct-points" id="pts-low">— pts above low</div>
   </div>
-  <div class="pct-divider">
-    <div class="pct-divider-label">CURRENT<br>POSITION</div>
-  </div>
-  <div class="pct-card pct-down">
-    <div class="pct-icon">↓</div>
-    <div class="pct-num" id="pct-from-high">—</div>
-    <div class="pct-desc">below 52-week <strong>high</strong></div>
+  <div class="pct-box box-down">
+    <div class="pct-box-label">vs 52-Week High</div>
+    <div class="pct-arrow">↓</div>
+    <div class="pct-big" id="pct-high">—</div>
+    <div class="pct-caption">Current is this much <strong>below</strong><br>the 52-week high</div>
+    <div class="pct-points" id="pts-high">— pts below high</div>
   </div>
 </div>
 
+<!-- PROGRESS BAR -->
 <div class="progress-section">
-  <div class="progress-header">
-    <span class="progress-title">Position between 52W Low → 52W High</span>
-    <span class="progress-pct" id="prog-pct">—%</span>
+  <div class="prog-header">
+    <span class="prog-title">Position: 52W Low → 52W High</span>
+    <span class="prog-pct" id="prog-pct">—%</span>
   </div>
   <div class="bar-bg"><div class="bar-fill" id="prog-bar"></div></div>
   <div class="bar-labels">
-    <span>52W LOW</span>
-    <span id="prog-label">CURRENT</span>
-    <span>52W HIGH</span>
+    <span id="lbl-low">52W LOW</span>
+    <span id="lbl-cur">▲ CURRENT</span>
+    <span id="lbl-high">52W HIGH</span>
   </div>
 </div>
 
-<div class="insight" id="insight-box">Fetching live Nifty 50 data from NSE India...</div>
+<!-- INSIGHT -->
+<div class="insight" id="insight">Fetching live data from NSE India...</div>
 
-<div style="display:flex;flex-direction:column;align-items:center">
+<!-- TODAY'S STATS -->
+<div class="today-row">
+  <div class="today-card">
+    <div class="today-label">Open</div>
+    <div class="today-value" id="t-open">—</div>
+  </div>
+  <div class="today-card">
+    <div class="today-label">Prev Close</div>
+    <div class="today-value" id="t-prev">—</div>
+  </div>
+  <div class="today-card">
+    <div class="today-label">Day High</div>
+    <div class="today-value" id="t-dhigh">—</div>
+  </div>
+  <div class="today-card">
+    <div class="today-label">Day Low</div>
+    <div class="today-value" id="t-dlow">—</div>
+  </div>
+</div>
+
+<!-- BOTTOM CONTROLS -->
+<div class="bottom">
   <div class="refresh-row">
-    <button id="refresh-btn" onclick="fetchData()">↻ Refresh Data</button>
-    <span class="last-updated" id="last-updated"></span>
+    <button id="btn" onclick="load()">↻ Refresh</button>
+    <span class="last-updated" id="updated"></span>
+    <span class="source-badge" id="src-badge"></span>
   </div>
-  <div class="error-msg" id="error-msg"></div>
+  <div class="error-msg" id="err"></div>
+  <p class="note">Live data from NSE India · Prices in INR · Auto-refreshes every 60s<br>Not financial advice · For informational purposes only</p>
 </div>
-
-<p class="note">
-  Live data from NSE India · Prices in INR<br>
-  Not financial advice · For informational purposes only
-</p>
 
 <script>
-  const fmt = n => n.toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2});
+const fmt = n => Number(n).toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+const el = id => document.getElementById(id);
 
-  async function fetchData() {
-    const btn = document.getElementById('refresh-btn');
-    const errEl = document.getElementById('error-msg');
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner"></span> Fetching from NSE...';
-    errEl.style.display = 'none';
+async function load() {
+  const btn = el('btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Fetching...';
+  el('err').style.display = 'none';
 
-    try {
-      const res = await fetch('/api/nifty');
-      const d = await res.json();
-      if (!d.success) throw new Error(d.error);
+  try {
+    const res = await fetch('/api/nifty');
+    const d = await res.json();
+    if (d.error) throw new Error(d.error);
 
-      const { current, high52, low52, change, changePct } = d;
-      const pctFromLow  = ((current - low52) / low52) * 100;
-      const pctFromHigh = ((high52 - current) / high52) * 100;
-      const prog = Math.max(0, Math.min(100, ((current - low52) / (high52 - low52)) * 100));
+    const { current, change, changePct, high52, low52,
+            pctFromHigh, pctFromLow, dayHigh, dayLow, open, prevClose, source } = d;
 
-      document.getElementById('cur-val').textContent = fmt(current);
-      document.getElementById('cur-chg').textContent =
-        (change >= 0 ? '▲ +' : '▼ ') + fmt(Math.abs(change)) +
-        ' (' + (change >= 0 ? '+' : '') + changePct.toFixed(2) + '%) today';
-      document.getElementById('cur-chg').style.color = change >= 0 ? 'var(--accent2)' : 'var(--red)';
+    const pts_above_low  = current - low52;
+    const pts_below_high = high52 - current;
+    const prog = Math.max(0, Math.min(100, (current - low52) / (high52 - low52) * 100));
 
-      document.getElementById('high-val').textContent = fmt(high52);
-      document.getElementById('high-sub').textContent = '52W peak · ₹' + fmt(high52);
-      document.getElementById('low-val').textContent  = fmt(low52);
-      document.getElementById('low-sub').textContent  = '52W floor · ₹' + fmt(low52);
+    // Top cards
+    el('cur-val').textContent  = '₹' + fmt(current);
+    el('high-val').textContent = '₹' + fmt(high52);
+    el('low-val').textContent  = '₹' + fmt(low52);
+    el('cur-chg').textContent  = (change >= 0 ? '▲ +' : '▼ ') + fmt(Math.abs(change)) + ' (' + (change >= 0 ? '+' : '') + Number(changePct).toFixed(2) + '%) today';
+    el('cur-chg').style.color  = change >= 0 ? 'var(--green)' : 'var(--red)';
 
-      document.getElementById('pct-from-low').textContent  = '+' + pctFromLow.toFixed(2) + '%';
-      document.getElementById('pct-from-high').textContent = '-' + pctFromHigh.toFixed(2) + '%';
+    // BIG percentages
+    el('pct-low').textContent  = '+' + Number(pctFromLow).toFixed(2)  + '%';
+    el('pct-high').textContent = '-' + Number(pctFromHigh).toFixed(2) + '%';
+    el('pts-low').textContent  = '+' + fmt(pts_above_low)  + ' pts above 52W low';
+    el('pts-high').textContent = '-' + fmt(pts_below_high) + ' pts below 52W high';
 
-      const progPct = prog.toFixed(1);
-      document.getElementById('prog-pct').textContent = progPct + '%';
-      document.getElementById('prog-bar').style.width = progPct + '%';
-      document.getElementById('prog-label').textContent = '← CURRENT (' + progPct + '%)';
+    // Progress bar
+    const pp = prog.toFixed(1);
+    el('prog-pct').textContent = pp + '% of the way from low to high';
+    el('prog-bar').style.width = pp + '%';
+    el('lbl-low').textContent  = '₹' + fmt(low52);
+    el('lbl-high').textContent = '₹' + fmt(high52);
+    el('lbl-cur').textContent  = '▲ ₹' + fmt(current);
 
-      let msg = '';
-      if (pctFromHigh < 1)       msg = `🚀 <strong>Near All-Time Territory!</strong> Nifty 50 is only <strong>${pctFromHigh.toFixed(2)}%</strong> below its 52W high of <strong>₹${fmt(high52)}</strong>. Strong bullish momentum.`;
-      else if (pctFromHigh < 5)  msg = `📈 <strong>Strong Recovery.</strong> Nifty 50 is <strong>${pctFromHigh.toFixed(2)}%</strong> below its 52W high of <strong>₹${fmt(high52)}</strong>. A modest push could take it to new highs.`;
-      else if (pctFromHigh < 10) msg = `📊 <strong>Moderate Pullback.</strong> Nifty 50 is <strong>${pctFromHigh.toFixed(2)}%</strong> below its 52W high of <strong>₹${fmt(high52)}</strong>. Watch for key resistance levels.`;
-      else if (pctFromHigh < 20) msg = `⚠️ <strong>Significant Gap.</strong> Nifty 50 is <strong>${pctFromHigh.toFixed(2)}%</strong> below its 52W high of <strong>₹${fmt(high52)}</strong>. Notable correction — sentiment may be cautious.`;
-      else                        msg = `🔴 <strong>Deep Correction.</strong> Nifty 50 is <strong>${pctFromHigh.toFixed(2)}%</strong> below its 52W high of <strong>₹${fmt(high52)}</strong>. Significant drawdown — proceed with caution.`;
-      document.getElementById('insight-box').innerHTML = msg;
+    // Today stats
+    el('t-open').textContent  = '₹' + fmt(open);
+    el('t-prev').textContent  = '₹' + fmt(prevClose);
+    el('t-dhigh').textContent = '₹' + fmt(dayHigh);
+    el('t-dlow').textContent  = '₹' + fmt(dayLow);
 
-      document.getElementById('last-updated').textContent =
-        'Updated ' + new Date().toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'});
+    // Insight
+    const g = Number(pctFromHigh);
+    let msg = '';
+    if (g < 1)       msg = `🚀 <strong>Near 52W Peak!</strong> Only <strong>${g.toFixed(2)}%</strong> below the 52-week high of ₹${fmt(high52)}. Extremely strong momentum.`;
+    else if (g < 5)  msg = `📈 <strong>Strong Zone.</strong> Nifty is <strong>${g.toFixed(2)}%</strong> below its 52-week high of ₹${fmt(high52)}. A modest push could take it to new highs.`;
+    else if (g < 10) msg = `📊 <strong>Moderate Pullback.</strong> Nifty is <strong>${g.toFixed(2)}%</strong> below the 52-week high of ₹${fmt(high52)}. Watch for resistance near the peak.`;
+    else if (g < 20) msg = `⚠️ <strong>Significant Correction.</strong> Nifty is <strong>${g.toFixed(2)}%</strong> below its 52-week high of ₹${fmt(high52)}. Sentiment is cautious.`;
+    else             msg = `🔴 <strong>Deep Drawdown.</strong> Nifty is <strong>${g.toFixed(2)}%</strong> below its 52-week high of ₹${fmt(high52)}. Significant correction underway.`;
+    el('insight').innerHTML = msg;
 
-    } catch (e) {
-      errEl.style.display = 'block';
-      errEl.textContent = '⚠ ' + e.message;
-      document.getElementById('insight-box').innerHTML = 'Could not load data. Click <strong>Refresh Data</strong> to retry.';
+    // Source badge
+    if (source === 'yahoo') {
+      el('src-badge').textContent = '⚡ via Yahoo fallback';
+      el('src-badge').style.display = 'inline';
+    } else {
+      el('src-badge').style.display = 'none';
     }
 
-    btn.disabled = false;
-    btn.innerHTML = '↻ Refresh Data';
+    el('updated').textContent = 'Updated ' + new Date().toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+
+  } catch(e) {
+    el('err').style.display = 'block';
+    el('err').textContent = '⚠ ' + e.message;
   }
 
-  fetchData();
-  // Auto-refresh every 5 minutes
-  setInterval(fetchData, 5 * 60 * 1000);
+  btn.disabled = false;
+  btn.innerHTML = '↻ Refresh';
+}
+
+load();
+setInterval(load, 60000);
 </script>
 </body>
 </html>
