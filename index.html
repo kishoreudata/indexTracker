@@ -15,213 +15,210 @@
   body{
     background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;
     min-height:100vh;display:flex;flex-direction:column;align-items:center;
-    padding:36px 16px;overflow-x:hidden;
-  }
-  body::before{
-    content:'';position:fixed;top:-200px;left:-200px;width:600px;height:600px;
-    background:radial-gradient(circle,rgba(240,192,64,0.07) 0%,transparent 70%);
-    pointer-events:none;
+    padding:0 0 40px 0;overflow-x:hidden;
   }
 
-  header{text-align:center;margin-bottom:36px;animation:fadeDown 0.5s ease both;}
-  .logo{font-size:10px;font-family:'JetBrains Mono',monospace;letter-spacing:4px;color:var(--accent);text-transform:uppercase;margin-bottom:8px;}
-  h1{font-size:clamp(1.8rem,5vw,3rem);font-weight:800;letter-spacing:-1px;line-height:1.1;}
-  h1 span{color:var(--accent);}
-  .subtitle{font-size:12px;color:var(--muted);margin-top:8px;font-family:'JetBrains Mono',monospace;}
+  /* STICKY TOP BAR */
+  .topbar{
+    position:sticky;top:0;z-index:100;
+    width:100%;background:rgba(10,12,15,0.95);
+    backdrop-filter:blur(12px);
+    border-bottom:1px solid var(--border);
+    padding:12px 20px;
+    display:flex;align-items:center;justify-content:space-between;
+    gap:12px;
+  }
+  .topbar-left{display:flex;flex-direction:column;}
+  .topbar-title{font-size:15px;font-weight:800;letter-spacing:-0.5px;}
+  .topbar-title span{color:var(--accent);}
+  .topbar-sub{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--muted);margin-top:2px;}
+  .topbar-right{display:flex;align-items:center;gap:10px;flex-shrink:0;}
+  .source-tag{font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--muted);padding:3px 8px;border:1px solid var(--border);border-radius:999px;white-space:nowrap;}
+  .refresh-btn{
+    background:var(--accent);color:#0a0c0f;border:none;border-radius:8px;
+    padding:8px 16px;font-family:'Syne',sans-serif;font-weight:700;font-size:13px;
+    cursor:pointer;letter-spacing:0.5px;transition:transform 0.15s,opacity 0.15s;
+    white-space:nowrap;
+  }
+  .refresh-btn:hover{transform:translateY(-1px);opacity:0.9;}
+  .refresh-btn:disabled{opacity:0.4;cursor:not-allowed;transform:none;}
+  .spinner{display:inline-block;width:12px;height:12px;border:2px solid rgba(0,0,0,0.2);border-top-color:#0a0c0f;border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;margin-right:4px;}
+
+  /* MAIN CONTENT */
+  .content{width:100%;max-width:860px;padding:24px 16px 0;display:flex;flex-direction:column;gap:14px;}
 
   /* 3 TOP CARDS */
-  .card-grid{
-    display:grid;grid-template-columns:repeat(3,1fr);
-    gap:12px;width:100%;max-width:860px;margin-bottom:16px;
-    animation:fadeUp 0.5s 0.1s ease both;
-  }
+  .card-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
   @media(max-width:600px){.card-grid{grid-template-columns:1fr;}}
   .card{
     background:var(--surface);border:1px solid var(--border);border-radius:14px;
-    padding:22px 20px;position:relative;overflow:hidden;
+    padding:20px;position:relative;overflow:hidden;
   }
   .card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--card-top);}
   .card.c-current{--card-top:var(--green);}
   .card.c-high{--card-top:var(--accent);}
   .card.c-low{--card-top:var(--purple);}
   .card-label{font-size:9px;font-family:'JetBrains Mono',monospace;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-bottom:10px;}
-  .card-value{font-size:clamp(1.4rem,3vw,2rem);font-weight:800;font-family:'JetBrains Mono',monospace;letter-spacing:-1px;}
+  .card-value{font-size:clamp(1.3rem,3vw,1.9rem);font-weight:800;font-family:'JetBrains Mono',monospace;letter-spacing:-1px;}
   .card.c-current .card-value{color:var(--green);}
   .card.c-high .card-value{color:var(--accent);}
   .card.c-low .card-value{color:var(--purple);}
-  .card-sub{font-size:11px;color:var(--muted);margin-top:6px;font-family:'JetBrains Mono',monospace;}
+  .card-sub{font-size:11px;margin-top:6px;font-family:'JetBrains Mono',monospace;}
 
   /* BIG % BOXES */
-  .pct-section{
-    width:100%;max-width:860px;margin-bottom:16px;
-    display:grid;grid-template-columns:1fr 1fr;gap:12px;
-    animation:fadeUp 0.5s 0.15s ease both;
-  }
+  .pct-section{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
   @media(max-width:500px){.pct-section{grid-template-columns:1fr;}}
   .pct-box{
     background:var(--surface);border:1px solid var(--border);
-    border-radius:14px;padding:30px 24px;text-align:center;
-    display:flex;flex-direction:column;align-items:center;gap:8px;
+    border-radius:14px;padding:28px 20px;text-align:center;
+    display:flex;flex-direction:column;align-items:center;gap:6px;
     position:relative;overflow:hidden;
   }
   .pct-box::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--box-top);}
   .pct-box.box-up{--box-top:var(--green);}
   .pct-box.box-down{--box-top:var(--red);}
   .pct-box-label{font-size:9px;font-family:'JetBrains Mono',monospace;letter-spacing:3px;color:var(--muted);text-transform:uppercase;}
-  .pct-arrow{font-size:20px;font-weight:800;}
+  .pct-arrow{font-size:18px;font-weight:800;}
   .box-up .pct-arrow{color:var(--green);}
   .box-down .pct-arrow{color:var(--red);}
-  .pct-big{font-size:clamp(3rem,9vw,5rem);font-weight:800;font-family:'JetBrains Mono',monospace;letter-spacing:-3px;line-height:1;}
+  .pct-big{font-size:clamp(2.8rem,8vw,4.5rem);font-weight:800;font-family:'JetBrains Mono',monospace;letter-spacing:-3px;line-height:1;}
   .box-up .pct-big{color:var(--green);}
   .box-down .pct-big{color:var(--red);}
-  .pct-caption{font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;line-height:1.6;margin-top:2px;}
+
+  /* special case: at 52W high */
+  .pct-box.at-high .pct-big{color:var(--accent);}
+  .pct-box.at-high{--box-top:var(--accent);}
+  .pct-box.at-high .pct-arrow{color:var(--accent);}
+
+  .pct-caption{font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;line-height:1.6;margin-top:2px;}
   .pct-caption strong{color:var(--text);}
-  .pct-points{font-size:12px;font-family:'JetBrains Mono',monospace;padding:5px 14px;border-radius:999px;margin-top:4px;font-weight:600;}
+  .pct-points{font-size:11px;font-family:'JetBrains Mono',monospace;padding:4px 12px;border-radius:999px;margin-top:4px;font-weight:600;}
   .box-up .pct-points{background:rgba(74,240,160,0.1);color:var(--green);}
   .box-down .pct-points{background:rgba(240,80,96,0.1);color:var(--red);}
+  .at-high .pct-points{background:rgba(240,192,64,0.1);color:var(--accent);}
 
   /* PROGRESS */
-  .progress-section{
-    width:100%;max-width:860px;background:var(--surface);
-    border:1px solid var(--border);border-radius:14px;padding:24px;
-    margin-bottom:16px;animation:fadeUp 0.5s 0.2s ease both;
-  }
+  .progress-section{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:22px;}
   .prog-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;}
   .prog-title{font-size:9px;font-family:'JetBrains Mono',monospace;letter-spacing:3px;color:var(--muted);text-transform:uppercase;}
-  .prog-pct{font-size:20px;font-weight:800;font-family:'JetBrains Mono',monospace;color:var(--accent);}
-  .bar-bg{background:var(--border);border-radius:999px;height:14px;overflow:hidden;margin-bottom:10px;}
+  .prog-pct{font-size:18px;font-weight:800;font-family:'JetBrains Mono',monospace;color:var(--accent);}
+  .bar-bg{background:var(--border);border-radius:999px;height:12px;overflow:hidden;margin-bottom:10px;}
   .bar-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--purple),var(--green),var(--accent));transition:width 1.4s cubic-bezier(0.23,1,0.32,1);width:0%;}
-  .bar-labels{display:flex;justify-content:space-between;font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--muted);}
-  .bar-labels .lbl-low{color:var(--purple);}
-  .bar-labels .lbl-high{color:var(--accent);}
-  .bar-labels .lbl-cur{color:var(--green);}
+  .bar-labels{display:flex;justify-content:space-between;font-size:10px;font-family:'JetBrains Mono',monospace;}
+  .lbl-low{color:var(--purple);}
+  .lbl-cur{color:var(--green);}
+  .lbl-high{color:var(--accent);}
 
   /* INSIGHT */
-  .insight{
-    width:100%;max-width:860px;background:rgba(240,192,64,0.06);
-    border:1px solid rgba(240,192,64,0.2);border-radius:12px;
-    padding:18px 22px;font-size:14px;line-height:1.7;color:#c8c0a0;
-    margin-bottom:16px;animation:fadeUp 0.5s 0.25s ease both;
-  }
+  .insight{background:rgba(240,192,64,0.06);border:1px solid rgba(240,192,64,0.2);border-radius:12px;padding:16px 20px;font-size:14px;line-height:1.7;color:#c8c0a0;}
   .insight strong{color:var(--accent);}
 
   /* TODAY ROW */
-  .today-row{
-    width:100%;max-width:860px;
-    display:grid;grid-template-columns:repeat(4,1fr);gap:12px;
-    margin-bottom:16px;animation:fadeUp 0.5s 0.3s ease both;
-  }
+  .today-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
   @media(max-width:600px){.today-row{grid-template-columns:repeat(2,1fr);}}
-  .today-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center;}
+  .today-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center;}
   .today-label{font-size:9px;font-family:'JetBrains Mono',monospace;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:6px;}
-  .today-value{font-size:1rem;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--text);}
+  .today-value{font-size:0.95rem;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--text);}
 
-  /* BOTTOM */
-  .bottom{display:flex;flex-direction:column;align-items:center;gap:10px;animation:fadeUp 0.5s 0.35s ease both;}
-  .refresh-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;justify-content:center;}
-  button{
-    background:var(--accent);color:#0a0c0f;border:none;border-radius:8px;
-    padding:11px 28px;font-family:'Syne',sans-serif;font-weight:700;font-size:14px;
-    cursor:pointer;letter-spacing:1px;transition:transform 0.15s,opacity 0.15s;
-  }
-  button:hover{transform:translateY(-2px);opacity:0.9;}
-  button:disabled{opacity:0.4;cursor:not-allowed;transform:none;}
-  .last-updated{font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--muted);}
-  .source-tag{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--muted);padding:3px 10px;border:1px solid var(--border);border-radius:999px;}
-  .error-msg{color:var(--red);font-size:12px;font-family:'JetBrains Mono',monospace;display:none;text-align:center;max-width:500px;line-height:1.6;}
-  .note{font-size:10px;color:var(--muted);text-align:center;margin-top:4px;font-family:'JetBrains Mono',monospace;line-height:1.8;}
-  .spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;margin-right:6px;}
+  .error-msg{color:var(--red);font-size:12px;font-family:'JetBrains Mono',monospace;display:none;text-align:center;padding:12px;background:rgba(240,80,96,0.08);border:1px solid rgba(240,80,96,0.2);border-radius:10px;}
+  .note{font-size:10px;color:var(--muted);text-align:center;font-family:'JetBrains Mono',monospace;line-height:1.8;margin-top:4px;}
 
-  @keyframes fadeDown{from{opacity:0;transform:translateY(-16px)}to{opacity:1;transform:none}}
-  @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
   @keyframes spin{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
 
-<header>
-  <div class="logo">NSE · India · Live</div>
-  <h1>NIFTY <span>50</span> TRACKER</h1>
-  <p class="subtitle">Current Price · 52W High · 52W Low · % Difference</p>
-</header>
-
-<div class="card-grid">
-  <div class="card c-current">
-    <div class="card-label">Current Value</div>
-    <div class="card-value" id="cur-val">—</div>
-    <div class="card-sub" id="cur-chg">Loading...</div>
+<!-- STICKY TOP BAR WITH REFRESH -->
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="topbar-title">NIFTY <span>50</span> TRACKER</div>
+    <div class="topbar-sub" id="updated">NSE · India · Live</div>
   </div>
-  <div class="card c-high">
-    <div class="card-label">52-Week High</div>
-    <div class="card-value" id="high-val">—</div>
-    <div class="card-sub">yearly peak</div>
-  </div>
-  <div class="card c-low">
-    <div class="card-label">52-Week Low</div>
-    <div class="card-value" id="low-val">—</div>
-    <div class="card-sub">yearly floor</div>
-  </div>
-</div>
-
-<div class="pct-section">
-  <div class="pct-box box-up">
-    <div class="pct-box-label">% above 52-Week Low</div>
-    <div class="pct-arrow">↑</div>
-    <div class="pct-big" id="pct-low">—</div>
-    <div class="pct-caption">Current is this much <strong>above</strong> the 52-week low</div>
-    <div class="pct-points" id="pts-low">— pts</div>
-  </div>
-  <div class="pct-box box-down">
-    <div class="pct-box-label">% below 52-Week High</div>
-    <div class="pct-arrow">↓</div>
-    <div class="pct-big" id="pct-high">—</div>
-    <div class="pct-caption">Current is this much <strong>below</strong> the 52-week high</div>
-    <div class="pct-points" id="pts-high">— pts</div>
-  </div>
-</div>
-
-<div class="progress-section">
-  <div class="prog-header">
-    <span class="prog-title">52W Range Position</span>
-    <span class="prog-pct" id="prog-pct">—%</span>
-  </div>
-  <div class="bar-bg"><div class="bar-fill" id="prog-bar"></div></div>
-  <div class="bar-labels">
-    <span class="lbl-low" id="lbl-low">52W LOW</span>
-    <span class="lbl-cur" id="lbl-cur">▲ CURRENT</span>
-    <span class="lbl-high" id="lbl-high">52W HIGH</span>
-  </div>
-</div>
-
-<div class="insight" id="insight">Fetching live Nifty 50 data...</div>
-
-<div class="today-row">
-  <div class="today-card">
-    <div class="today-label">Open</div>
-    <div class="today-value" id="t-open">—</div>
-  </div>
-  <div class="today-card">
-    <div class="today-label">Prev Close</div>
-    <div class="today-value" id="t-prev">—</div>
-  </div>
-  <div class="today-card">
-    <div class="today-label">Day High</div>
-    <div class="today-value" id="t-dhigh">—</div>
-  </div>
-  <div class="today-card">
-    <div class="today-label">Day Low</div>
-    <div class="today-value" id="t-dlow">—</div>
-  </div>
-</div>
-
-<div class="bottom">
-  <div class="refresh-row">
-    <button id="btn" onclick="load()">↻ Refresh</button>
-    <span class="last-updated" id="updated"></span>
+  <div class="topbar-right">
     <span class="source-tag" id="src-tag" style="display:none"></span>
+    <button class="refresh-btn" id="btn" onclick="load()">↻ Refresh</button>
   </div>
+</div>
+
+<div class="content">
+
+  <!-- 3 VALUE CARDS -->
+  <div class="card-grid">
+    <div class="card c-current">
+      <div class="card-label">Current Value</div>
+      <div class="card-value" id="cur-val">—</div>
+      <div class="card-sub" id="cur-chg" style="color:var(--muted)">Loading...</div>
+    </div>
+    <div class="card c-high">
+      <div class="card-label">52-Week High</div>
+      <div class="card-value" id="high-val">—</div>
+      <div class="card-sub" style="color:var(--muted)">yearly peak</div>
+    </div>
+    <div class="card c-low">
+      <div class="card-label">52-Week Low</div>
+      <div class="card-value" id="low-val">—</div>
+      <div class="card-sub" style="color:var(--muted)">yearly floor</div>
+    </div>
+  </div>
+
+  <!-- BIG % BOXES -->
+  <div class="pct-section">
+    <div class="pct-box box-up" id="box-low">
+      <div class="pct-box-label">% above 52-Week Low</div>
+      <div class="pct-arrow">↑</div>
+      <div class="pct-big" id="pct-low">—</div>
+      <div class="pct-caption">Current is this much <strong>above</strong> the 52W low</div>
+      <div class="pct-points" id="pts-low">—</div>
+    </div>
+    <div class="pct-box box-down" id="box-high">
+      <div class="pct-box-label">% below 52-Week High</div>
+      <div class="pct-arrow" id="arrow-high">↓</div>
+      <div class="pct-big" id="pct-high">—</div>
+      <div class="pct-caption" id="cap-high">Current is this much <strong>below</strong> the 52W high</div>
+      <div class="pct-points" id="pts-high">—</div>
+    </div>
+  </div>
+
+  <!-- PROGRESS BAR -->
+  <div class="progress-section">
+    <div class="prog-header">
+      <span class="prog-title">52W Range Position</span>
+      <span class="prog-pct" id="prog-pct">—%</span>
+    </div>
+    <div class="bar-bg"><div class="bar-fill" id="prog-bar"></div></div>
+    <div class="bar-labels">
+      <span class="lbl-low" id="lbl-low">52W LOW</span>
+      <span class="lbl-cur" id="lbl-cur">▲ CURRENT</span>
+      <span class="lbl-high" id="lbl-high">52W HIGH</span>
+    </div>
+  </div>
+
+  <!-- INSIGHT -->
+  <div class="insight" id="insight">Fetching live Nifty 50 data...</div>
+
+  <!-- TODAY STATS -->
+  <div class="today-row">
+    <div class="today-card">
+      <div class="today-label">Open</div>
+      <div class="today-value" id="t-open">—</div>
+    </div>
+    <div class="today-card">
+      <div class="today-label">Prev Close</div>
+      <div class="today-value" id="t-prev">—</div>
+    </div>
+    <div class="today-card">
+      <div class="today-label">Day High</div>
+      <div class="today-value" id="t-dhigh">—</div>
+    </div>
+    <div class="today-card">
+      <div class="today-label">Day Low</div>
+      <div class="today-value" id="t-dlow">—</div>
+    </div>
+  </div>
+
   <div class="error-msg" id="err"></div>
   <p class="note">Live data · Prices in INR · Auto-refreshes every 60s · Not financial advice</p>
+
 </div>
 
 <script>
@@ -231,7 +228,7 @@ const el = id => document.getElementById(id);
 async function load() {
   const btn = el('btn');
   btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span>Fetching...';
+  btn.innerHTML = '<span class="spinner"></span>Loading...';
   el('err').style.display = 'none';
 
   try {
@@ -243,23 +240,46 @@ async function load() {
             pctFromHigh, pctFromLow, dayHigh, dayLow,
             open, prevClose, source, stale, cached } = d;
 
+    // Use server-provided changePct — but recalculate from prevClose to be safe
+    const safeChange    = parseFloat((current - prevClose).toFixed(2));
+    const safeChangePct = parseFloat(((safeChange / prevClose) * 100).toFixed(2));
+
     const ptsAboveLow  = current - low52;
     const ptsBelowHigh = high52 - current;
     const prog = Math.max(0, Math.min(100, (current - low52) / (high52 - low52) * 100));
 
-    // Top 3 cards
+    // Top cards
     el('cur-val').textContent  = '₹' + fmt(current);
     el('high-val').textContent = '₹' + fmt(high52);
     el('low-val').textContent  = '₹' + fmt(low52);
-    el('cur-chg').textContent  = (change >= 0 ? '▲ +' : '▼ ') + fmt(Math.abs(change)) +
-      ' (' + (change >= 0 ? '+' : '') + Number(changePct).toFixed(2) + '%) today';
-    el('cur-chg').style.color = change >= 0 ? 'var(--green)' : 'var(--red)';
+    el('cur-chg').textContent  = (safeChange >= 0 ? '▲ +' : '▼ ') + fmt(Math.abs(safeChange)) +
+      ' (' + (safeChange >= 0 ? '+' : '') + safeChangePct.toFixed(2) + '%) today';
+    el('cur-chg').style.color = safeChange >= 0 ? 'var(--green)' : 'var(--red)';
 
-    // Big % boxes
-    el('pct-low').textContent  = '+' + Number(pctFromLow).toFixed(2) + '%';
-    el('pct-high').textContent = '-' + Number(pctFromHigh).toFixed(2) + '%';
-    el('pts-low').textContent  = '+' + fmt(ptsAboveLow) + ' pts above 52W low';
-    el('pts-high').textContent = '-' + fmt(ptsBelowHigh) + ' pts below 52W high';
+    // % above 52W low
+    el('pct-low').textContent = '+' + Number(pctFromLow).toFixed(2) + '%';
+    el('pts-low').textContent = '+' + fmt(ptsAboveLow) + ' pts above 52W low';
+
+    // % below 52W high — handle at-peak case
+    const boxHigh    = el('box-high');
+    const arrowHigh  = el('arrow-high');
+    const capHigh    = el('cap-high');
+    const pctHighVal = Number(pctFromHigh);
+
+    if (pctHighVal <= 0) {
+      // At or above 52W high — new high!
+      boxHigh.className  = 'pct-box box-down at-high';
+      arrowHigh.textContent = '🏆';
+      el('pct-high').textContent = '0.00%';
+      capHigh.innerHTML  = '<strong>At 52-Week High!</strong> New yearly peak reached';
+      el('pts-high').textContent = 'Trading at / above 52W high';
+    } else {
+      boxHigh.className  = 'pct-box box-down';
+      arrowHigh.textContent = '↓';
+      el('pct-high').textContent = '-' + pctHighVal.toFixed(2) + '%';
+      capHigh.innerHTML  = 'Current is this much <strong>below</strong> the 52W high';
+      el('pts-high').textContent = '-' + fmt(ptsBelowHigh) + ' pts below 52W high';
+    }
 
     // Progress bar
     const pp = prog.toFixed(1);
@@ -276,27 +296,30 @@ async function load() {
     el('t-dlow').textContent  = '₹' + fmt(dayLow);
 
     // Insight
-    const g = Number(pctFromHigh);
+    const g = pctHighVal;
     let msg = '';
-    if      (g < 1)  msg = `🚀 <strong>Near 52W Peak!</strong> Only <strong>${g.toFixed(2)}%</strong> below the 52-week high of ₹${fmt(high52)}. Extremely strong momentum.`;
+    if      (g <= 0) msg = `🏆 <strong>At 52-Week High!</strong> Nifty 50 has hit a new yearly peak of ₹${fmt(current)}. Exceptional bullish momentum!`;
+    else if (g < 1)  msg = `🚀 <strong>Near 52W Peak!</strong> Only <strong>${g.toFixed(2)}%</strong> below the 52-week high of ₹${fmt(high52)}. Extremely strong momentum.`;
     else if (g < 5)  msg = `📈 <strong>Strong Zone.</strong> Nifty is <strong>${g.toFixed(2)}%</strong> below its 52-week high of ₹${fmt(high52)}. A modest push could take it to new highs.`;
     else if (g < 10) msg = `📊 <strong>Moderate Pullback.</strong> Nifty is <strong>${g.toFixed(2)}%</strong> below its 52-week high of ₹${fmt(high52)}. Watch for resistance near the peak.`;
     else if (g < 20) msg = `⚠️ <strong>Significant Correction.</strong> Nifty is <strong>${g.toFixed(2)}%</strong> below its 52-week high of ₹${fmt(high52)}. Sentiment is cautious.`;
     else             msg = `🔴 <strong>Deep Drawdown.</strong> Nifty is <strong>${g.toFixed(2)}%</strong> below its 52-week high of ₹${fmt(high52)}. Significant correction underway.`;
-    if (stale) msg += ` <span style="color:var(--muted)">(stale data — all sources temporarily unavailable)</span>`;
+    if (stale) msg += ` <span style="color:var(--muted);font-size:12px"> · stale data</span>`;
     el('insight').innerHTML = msg;
 
     // Source tag
     const srcEl = el('src-tag');
     srcEl.style.display = 'inline';
-    srcEl.textContent = '⚡ ' + (source || 'unknown') + (stale ? ' · stale' : cached ? ' · cached' : ' · live');
+    srcEl.textContent = source + (stale ? ' · stale' : cached ? ' · cached' : ' · live');
 
+    // Updated time in topbar
     el('updated').textContent = 'Updated ' + new Date().toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
 
   } catch(e) {
     el('err').style.display = 'block';
     el('err').textContent = '⚠ ' + e.message;
-    el('insight').innerHTML = 'Could not load data. Click <strong>Refresh</strong> to retry.';
+    el('insight').innerHTML = 'Could not load data. Tap <strong>Refresh</strong> to retry.';
+    el('updated').textContent = 'NSE · India · Live';
   }
 
   btn.disabled = false;
