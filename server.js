@@ -226,3 +226,30 @@ app.get('/api/health', (req, res) => res.json({
 app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 
 app.listen(PORT, () => console.log(`✅ Nifty Tracker running on port ${PORT}`));
+
+// ── DEBUG ENDPOINT ────────────────────────────────────────────────────────────
+app.get('/api/debug', async (req, res) => {
+  const results = {};
+
+  // Test Twelve Data
+  try {
+    const r = await axios.get(`https://api.twelvedata.com/quote?symbol=NIFTY&exchange=NSE&apikey=${TD_KEY}`, { timeout: 10000 });
+    results.twelvedata = { ok: true, data: r.data };
+  } catch(e) { results.twelvedata = { ok: false, error: e.message }; }
+
+  // Test Alpha Vantage
+  try {
+    const r = await axios.get(`https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=NSEI.BSE&outputsize=compact&apikey=${AV_KEY}`, { timeout: 15000 });
+    const keys = Object.keys(r.data);
+    results.alphavantage = { ok: true, keys, firstKey: r.data[keys[0]] };
+  } catch(e) { results.alphavantage = { ok: false, error: e.message }; }
+
+  // Test Stooq
+  try {
+    const r = await axios.get('https://stooq.com/q/d/l/?s=^nsei&i=d', { timeout: 10000, headers: { 'User-Agent': 'Mozilla/5.0' } });
+    const lines = r.data.trim().split('\n');
+    results.stooq = { ok: true, totalLines: lines.length, lastLine: lines[lines.length - 1] };
+  } catch(e) { results.stooq = { ok: false, error: e.message }; }
+
+  res.json(results);
+});
