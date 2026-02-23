@@ -6,54 +6,29 @@
 <title>Nifty 50 · Index Tracker</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg:#0a0c0f; --surface:#111418; --border:#1e2530;
-    --accent:#f0c040; --green:#4af0a0; --red:#f05060;
-    --purple:#a78bfa; --text:#e8eaf0; --muted:#5a6070;
-  }
+  :root{--bg:#0a0c0f;--surface:#111418;--border:#1e2530;--accent:#f0c040;--green:#4af0a0;--red:#f05060;--purple:#a78bfa;--text:#e8eaf0;--muted:#5a6070;}
   *{margin:0;padding:0;box-sizing:border-box;}
-  body{
-    background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;
-    min-height:100vh;display:flex;flex-direction:column;align-items:center;
-    padding:0 0 40px 0;overflow-x:hidden;
-  }
-
-  /* STICKY TOP BAR */
-  .topbar{
-    position:sticky;top:0;z-index:100;
-    width:100%;background:rgba(10,12,15,0.95);
-    backdrop-filter:blur(12px);
-    border-bottom:1px solid var(--border);
-    padding:12px 20px;
-    display:flex;align-items:center;justify-content:space-between;
-    gap:12px;
-  }
-  .topbar-left{display:flex;flex-direction:column;}
+  body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:0 0 40px 0;overflow-x:hidden;}
+  .topbar{position:sticky;top:0;z-index:100;width:100%;background:rgba(10,12,15,0.96);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;}
+  .topbar-left{display:flex;flex-direction:column;gap:3px;}
   .topbar-title{font-size:15px;font-weight:800;letter-spacing:-0.5px;}
   .topbar-title span{color:var(--accent);}
-  .topbar-sub{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--muted);margin-top:2px;}
-  .topbar-right{display:flex;align-items:center;gap:10px;flex-shrink:0;}
-  .source-tag{font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--muted);padding:3px 8px;border:1px solid var(--border);border-radius:999px;white-space:nowrap;}
-  .refresh-btn{
-    background:var(--accent);color:#0a0c0f;border:none;border-radius:8px;
-    padding:8px 16px;font-family:'Syne',sans-serif;font-weight:700;font-size:13px;
-    cursor:pointer;letter-spacing:0.5px;transition:transform 0.15s,opacity 0.15s;
-    white-space:nowrap;
-  }
+  .topbar-meta{display:flex;align-items:center;gap:8px;}
+  .topbar-sub{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--muted);}
+  .market-badge{font-size:9px;font-family:'JetBrains Mono',monospace;padding:2px 8px;border-radius:999px;font-weight:600;letter-spacing:1px;}
+  .market-open{background:rgba(74,240,160,0.15);color:var(--green);border:1px solid rgba(74,240,160,0.3);}
+  .market-closed{background:rgba(90,96,112,0.2);color:var(--muted);border:1px solid var(--border);}
+  .topbar-right{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+  .source-tag{font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--muted);padding:2px 8px;border:1px solid var(--border);border-radius:999px;white-space:nowrap;display:none;}
+  .refresh-btn{background:var(--accent);color:#0a0c0f;border:none;border-radius:8px;padding:8px 16px;font-family:'Syne',sans-serif;font-weight:700;font-size:13px;cursor:pointer;transition:transform 0.15s,opacity 0.15s;white-space:nowrap;}
   .refresh-btn:hover{transform:translateY(-1px);opacity:0.9;}
   .refresh-btn:disabled{opacity:0.4;cursor:not-allowed;transform:none;}
   .spinner{display:inline-block;width:12px;height:12px;border:2px solid rgba(0,0,0,0.2);border-top-color:#0a0c0f;border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;margin-right:4px;}
-
-  /* MAIN CONTENT */
-  .content{width:100%;max-width:860px;padding:24px 16px 0;display:flex;flex-direction:column;gap:14px;}
-
-  /* 3 TOP CARDS */
+  .content{width:100%;max-width:860px;padding:20px 16px 0;display:flex;flex-direction:column;gap:14px;}
+  .stale-banner{background:rgba(240,192,64,0.08);border:1px solid rgba(240,192,64,0.25);border-radius:10px;padding:10px 16px;font-size:12px;font-family:'JetBrains Mono',monospace;color:#c8a840;display:none;text-align:center;}
   .card-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
   @media(max-width:600px){.card-grid{grid-template-columns:1fr;}}
-  .card{
-    background:var(--surface);border:1px solid var(--border);border-radius:14px;
-    padding:20px;position:relative;overflow:hidden;
-  }
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px;position:relative;overflow:hidden;}
   .card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--card-top);}
   .card.c-current{--card-top:var(--green);}
   .card.c-high{--card-top:var(--accent);}
@@ -64,40 +39,32 @@
   .card.c-high .card-value{color:var(--accent);}
   .card.c-low .card-value{color:var(--purple);}
   .card-sub{font-size:11px;margin-top:6px;font-family:'JetBrains Mono',monospace;}
-
-  /* BIG % BOXES */
   .pct-section{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
   @media(max-width:500px){.pct-section{grid-template-columns:1fr;}}
-  .pct-box{
-    background:var(--surface);border:1px solid var(--border);
-    border-radius:14px;padding:28px 20px;text-align:center;
-    display:flex;flex-direction:column;align-items:center;gap:6px;
-    position:relative;overflow:hidden;
-  }
+  .pct-box{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:28px 20px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px;position:relative;overflow:hidden;}
   .pct-box::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--box-top);}
   .pct-box.box-up{--box-top:var(--green);}
   .pct-box.box-down{--box-top:var(--red);}
+  .pct-box.at-peak{--box-top:var(--accent);}
+  .pct-box.at-floor{--box-top:var(--purple);}
   .pct-box-label{font-size:9px;font-family:'JetBrains Mono',monospace;letter-spacing:3px;color:var(--muted);text-transform:uppercase;}
   .pct-arrow{font-size:18px;font-weight:800;}
   .box-up .pct-arrow{color:var(--green);}
   .box-down .pct-arrow{color:var(--red);}
+  .at-peak .pct-arrow{color:var(--accent);}
+  .at-floor .pct-arrow{color:var(--purple);}
   .pct-big{font-size:clamp(2.8rem,8vw,4.5rem);font-weight:800;font-family:'JetBrains Mono',monospace;letter-spacing:-3px;line-height:1;}
   .box-up .pct-big{color:var(--green);}
   .box-down .pct-big{color:var(--red);}
-
-  /* special case: at 52W high */
-  .pct-box.at-high .pct-big{color:var(--accent);}
-  .pct-box.at-high{--box-top:var(--accent);}
-  .pct-box.at-high .pct-arrow{color:var(--accent);}
-
+  .at-peak .pct-big{color:var(--accent);}
+  .at-floor .pct-big{color:var(--purple);}
   .pct-caption{font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;line-height:1.6;margin-top:2px;}
   .pct-caption strong{color:var(--text);}
   .pct-points{font-size:11px;font-family:'JetBrains Mono',monospace;padding:4px 12px;border-radius:999px;margin-top:4px;font-weight:600;}
   .box-up .pct-points{background:rgba(74,240,160,0.1);color:var(--green);}
   .box-down .pct-points{background:rgba(240,80,96,0.1);color:var(--red);}
-  .at-high .pct-points{background:rgba(240,192,64,0.1);color:var(--accent);}
-
-  /* PROGRESS */
+  .at-peak .pct-points{background:rgba(240,192,64,0.1);color:var(--accent);}
+  .at-floor .pct-points{background:rgba(167,139,250,0.1);color:var(--purple);}
   .progress-section{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:22px;}
   .prog-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;}
   .prog-title{font-size:9px;font-family:'JetBrains Mono',monospace;letter-spacing:3px;color:var(--muted);text-transform:uppercase;}
@@ -108,41 +75,37 @@
   .lbl-low{color:var(--purple);}
   .lbl-cur{color:var(--green);}
   .lbl-high{color:var(--accent);}
-
-  /* INSIGHT */
   .insight{background:rgba(240,192,64,0.06);border:1px solid rgba(240,192,64,0.2);border-radius:12px;padding:16px 20px;font-size:14px;line-height:1.7;color:#c8c0a0;}
   .insight strong{color:var(--accent);}
-
-  /* TODAY ROW */
   .today-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
   @media(max-width:600px){.today-row{grid-template-columns:repeat(2,1fr);}}
   .today-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center;}
   .today-label{font-size:9px;font-family:'JetBrains Mono',monospace;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:6px;}
   .today-value{font-size:0.95rem;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--text);}
-
   .error-msg{color:var(--red);font-size:12px;font-family:'JetBrains Mono',monospace;display:none;text-align:center;padding:12px;background:rgba(240,80,96,0.08);border:1px solid rgba(240,80,96,0.2);border-radius:10px;}
-  .note{font-size:10px;color:var(--muted);text-align:center;font-family:'JetBrains Mono',monospace;line-height:1.8;margin-top:4px;}
-
+  .note{font-size:10px;color:var(--muted);text-align:center;font-family:'JetBrains Mono',monospace;line-height:1.8;}
   @keyframes spin{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
 
-<!-- STICKY TOP BAR WITH REFRESH -->
 <div class="topbar">
   <div class="topbar-left">
     <div class="topbar-title">NIFTY <span>50</span> TRACKER</div>
-    <div class="topbar-sub" id="updated">NSE · India · Live</div>
+    <div class="topbar-meta">
+      <span class="topbar-sub" id="updated">Loading...</span>
+      <span class="market-badge market-closed" id="market-badge">MARKET CLOSED</span>
+    </div>
   </div>
   <div class="topbar-right">
-    <span class="source-tag" id="src-tag" style="display:none"></span>
+    <span class="source-tag" id="src-tag"></span>
     <button class="refresh-btn" id="btn" onclick="load()">↻ Refresh</button>
   </div>
 </div>
 
 <div class="content">
+  <div class="stale-banner" id="stale-banner">⚠ Live data temporarily unavailable — showing last known values. Tap Refresh to retry.</div>
 
-  <!-- 3 VALUE CARDS -->
   <div class="card-grid">
     <div class="card c-current">
       <div class="card-label">Current Value</div>
@@ -161,13 +124,12 @@
     </div>
   </div>
 
-  <!-- BIG % BOXES -->
   <div class="pct-section">
     <div class="pct-box box-up" id="box-low">
       <div class="pct-box-label">% above 52-Week Low</div>
-      <div class="pct-arrow">↑</div>
+      <div class="pct-arrow" id="arrow-low">↑</div>
       <div class="pct-big" id="pct-low">—</div>
-      <div class="pct-caption">Current is this much <strong>above</strong> the 52W low</div>
+      <div class="pct-caption" id="cap-low">Current is this much <strong>above</strong> the 52W low</div>
       <div class="pct-points" id="pts-low">—</div>
     </div>
     <div class="pct-box box-down" id="box-high">
@@ -179,7 +141,6 @@
     </div>
   </div>
 
-  <!-- PROGRESS BAR -->
   <div class="progress-section">
     <div class="prog-header">
       <span class="prog-title">52W Range Position</span>
@@ -193,36 +154,21 @@
     </div>
   </div>
 
-  <!-- INSIGHT -->
   <div class="insight" id="insight">Fetching live Nifty 50 data...</div>
 
-  <!-- TODAY STATS -->
   <div class="today-row">
-    <div class="today-card">
-      <div class="today-label">Open</div>
-      <div class="today-value" id="t-open">—</div>
-    </div>
-    <div class="today-card">
-      <div class="today-label">Prev Close</div>
-      <div class="today-value" id="t-prev">—</div>
-    </div>
-    <div class="today-card">
-      <div class="today-label">Day High</div>
-      <div class="today-value" id="t-dhigh">—</div>
-    </div>
-    <div class="today-card">
-      <div class="today-label">Day Low</div>
-      <div class="today-value" id="t-dlow">—</div>
-    </div>
+    <div class="today-card"><div class="today-label">Open</div><div class="today-value" id="t-open">—</div></div>
+    <div class="today-card"><div class="today-label">Prev Close</div><div class="today-value" id="t-prev">—</div></div>
+    <div class="today-card"><div class="today-label">Day High</div><div class="today-value" id="t-dhigh">—</div></div>
+    <div class="today-card"><div class="today-label">Day Low</div><div class="today-value" id="t-dlow">—</div></div>
   </div>
 
   <div class="error-msg" id="err"></div>
-  <p class="note">Live data · Prices in INR · Auto-refreshes every 60s · Not financial advice</p>
-
+  <p class="note">Live data via Twelve Data & Alpha Vantage · Prices in INR · Auto-refreshes every 60s · Not financial advice</p>
 </div>
 
 <script>
-const fmt = n => Number(n).toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+const fmt = n => Number(n).toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2});
 const el = id => document.getElementById(id);
 
 async function load() {
@@ -236,48 +182,66 @@ async function load() {
     const d = await res.json();
     if (d.error) throw new Error(d.error);
 
-    const { current, change, changePct, high52, low52,
-            pctFromHigh, pctFromLow, dayHigh, dayLow,
-            open, prevClose, source, stale, cached } = d;
+    const {current, prevClose, open, dayHigh, dayLow, high52, low52,
+           pctFromHigh, pctFromLow, isMarketOpen, liveSource, histSource, liveStale, histStale} = d;
 
-    // Use server-provided changePct — but recalculate from prevClose to be safe
-    const safeChange    = parseFloat((current - prevClose).toFixed(2));
-    const safeChangePct = parseFloat(((safeChange / prevClose) * 100).toFixed(2));
-
+    // Accurate change from prevClose
+    const change    = parseFloat((current - prevClose).toFixed(2));
+    const changePct = parseFloat(((change / prevClose) * 100).toFixed(2));
     const ptsAboveLow  = current - low52;
     const ptsBelowHigh = high52 - current;
     const prog = Math.max(0, Math.min(100, (current - low52) / (high52 - low52) * 100));
 
-    // Top cards
+    // Stale banner
+    el('stale-banner').style.display = (liveStale || histStale) ? 'block' : 'none';
+
+    // Market status
+    const badge = el('market-badge');
+    if (isMarketOpen) {
+      badge.textContent = '● LIVE';
+      badge.className = 'market-badge market-open';
+    } else {
+      badge.textContent = 'MARKET CLOSED';
+      badge.className = 'market-badge market-closed';
+    }
+
+    // Cards
     el('cur-val').textContent  = '₹' + fmt(current);
     el('high-val').textContent = '₹' + fmt(high52);
     el('low-val').textContent  = '₹' + fmt(low52);
-    el('cur-chg').textContent  = (safeChange >= 0 ? '▲ +' : '▼ ') + fmt(Math.abs(safeChange)) +
-      ' (' + (safeChange >= 0 ? '+' : '') + safeChangePct.toFixed(2) + '%) today';
-    el('cur-chg').style.color = safeChange >= 0 ? 'var(--green)' : 'var(--red)';
+    el('cur-chg').textContent  = (change >= 0 ? '▲ +' : '▼ ') + fmt(Math.abs(change)) +
+      ' (' + (change >= 0 ? '+' : '') + changePct.toFixed(2) + '%) today';
+    el('cur-chg').style.color = change >= 0 ? 'var(--green)' : 'var(--red)';
 
     // % above 52W low
-    el('pct-low').textContent = '+' + Number(pctFromLow).toFixed(2) + '%';
-    el('pts-low').textContent = '+' + fmt(ptsAboveLow) + ' pts above 52W low';
+    const lowPct = Number(pctFromLow);
+    if (lowPct <= 0) {
+      el('box-low').className = 'pct-box at-floor';
+      el('arrow-low').textContent = '⚠';
+      el('pct-low').textContent = '0.00%';
+      el('cap-low').innerHTML = '<strong>At 52-Week Low!</strong> Nifty is at yearly floor';
+      el('pts-low').textContent = 'At / below 52W low';
+    } else {
+      el('box-low').className = 'pct-box box-up';
+      el('arrow-low').textContent = '↑';
+      el('pct-low').textContent = '+' + lowPct.toFixed(2) + '%';
+      el('cap-low').innerHTML = 'Current is this much <strong>above</strong> the 52W low';
+      el('pts-low').textContent = '+' + fmt(ptsAboveLow) + ' pts above 52W low';
+    }
 
-    // % below 52W high — handle at-peak case
-    const boxHigh    = el('box-high');
-    const arrowHigh  = el('arrow-high');
-    const capHigh    = el('cap-high');
-    const pctHighVal = Number(pctFromHigh);
-
-    if (pctHighVal <= 0) {
-      // At or above 52W high — new high!
-      boxHigh.className  = 'pct-box box-down at-high';
-      arrowHigh.textContent = '🏆';
+    // % below 52W high
+    const highPct = Number(pctFromHigh);
+    if (highPct <= 0) {
+      el('box-high').className = 'pct-box at-peak';
+      el('arrow-high').textContent = '🏆';
       el('pct-high').textContent = '0.00%';
-      capHigh.innerHTML  = '<strong>At 52-Week High!</strong> New yearly peak reached';
+      el('cap-high').innerHTML = '<strong>At 52-Week High!</strong> New yearly peak reached';
       el('pts-high').textContent = 'Trading at / above 52W high';
     } else {
-      boxHigh.className  = 'pct-box box-down';
-      arrowHigh.textContent = '↓';
-      el('pct-high').textContent = '-' + pctHighVal.toFixed(2) + '%';
-      capHigh.innerHTML  = 'Current is this much <strong>below</strong> the 52W high';
+      el('box-high').className = 'pct-box box-down';
+      el('arrow-high').textContent = '↓';
+      el('pct-high').textContent = '-' + highPct.toFixed(2) + '%';
+      el('cap-high').innerHTML = 'Current is this much <strong>below</strong> the 52W high';
       el('pts-high').textContent = '-' + fmt(ptsBelowHigh) + ' pts below 52W high';
     }
 
@@ -296,30 +260,29 @@ async function load() {
     el('t-dlow').textContent  = '₹' + fmt(dayLow);
 
     // Insight
-    const g = pctHighVal;
+    const g = highPct;
     let msg = '';
-    if      (g <= 0) msg = `🏆 <strong>At 52-Week High!</strong> Nifty 50 has hit a new yearly peak of ₹${fmt(current)}. Exceptional bullish momentum!`;
-    else if (g < 1)  msg = `🚀 <strong>Near 52W Peak!</strong> Only <strong>${g.toFixed(2)}%</strong> below the 52-week high of ₹${fmt(high52)}. Extremely strong momentum.`;
+    if      (g <= 0) msg = `🏆 <strong>At 52-Week High!</strong> Nifty hit a new yearly peak of ₹${fmt(current)}. Exceptional bullish momentum!`;
+    else if (g < 1)  msg = `🚀 <strong>Near 52W Peak!</strong> Only <strong>${g.toFixed(2)}%</strong> below the 52-week high of ₹${fmt(high52)}.`;
     else if (g < 5)  msg = `📈 <strong>Strong Zone.</strong> Nifty is <strong>${g.toFixed(2)}%</strong> below its 52-week high of ₹${fmt(high52)}. A modest push could take it to new highs.`;
-    else if (g < 10) msg = `📊 <strong>Moderate Pullback.</strong> Nifty is <strong>${g.toFixed(2)}%</strong> below its 52-week high of ₹${fmt(high52)}. Watch for resistance near the peak.`;
-    else if (g < 20) msg = `⚠️ <strong>Significant Correction.</strong> Nifty is <strong>${g.toFixed(2)}%</strong> below its 52-week high of ₹${fmt(high52)}. Sentiment is cautious.`;
-    else             msg = `🔴 <strong>Deep Drawdown.</strong> Nifty is <strong>${g.toFixed(2)}%</strong> below its 52-week high of ₹${fmt(high52)}. Significant correction underway.`;
-    if (stale) msg += ` <span style="color:var(--muted);font-size:12px"> · stale data</span>`;
+    else if (g < 10) msg = `📊 <strong>Moderate Pullback.</strong> Nifty is <strong>${g.toFixed(2)}%</strong> below its 52-week high of ₹${fmt(high52)}.`;
+    else if (g < 20) msg = `⚠️ <strong>Significant Correction.</strong> Nifty is <strong>${g.toFixed(2)}%</strong> below its 52-week high of ₹${fmt(high52)}.`;
+    else             msg = `🔴 <strong>Deep Drawdown.</strong> Nifty is <strong>${g.toFixed(2)}%</strong> below its 52-week high of ₹${fmt(high52)}.`;
+    if (liveStale) msg += ` <span style="color:var(--muted);font-size:12px">· stale data</span>`;
     el('insight').innerHTML = msg;
 
     // Source tag
     const srcEl = el('src-tag');
     srcEl.style.display = 'inline';
-    srcEl.textContent = source + (stale ? ' · stale' : cached ? ' · cached' : ' · live');
+    srcEl.textContent = `live:${liveSource || '?'} · 52W:${histSource || '?'}`;
 
-    // Updated time in topbar
     el('updated').textContent = 'Updated ' + new Date().toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
 
   } catch(e) {
     el('err').style.display = 'block';
     el('err').textContent = '⚠ ' + e.message;
     el('insight').innerHTML = 'Could not load data. Tap <strong>Refresh</strong> to retry.';
-    el('updated').textContent = 'NSE · India · Live';
+    el('updated').textContent = 'Failed to load';
   }
 
   btn.disabled = false;
