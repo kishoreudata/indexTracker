@@ -6,51 +6,47 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 const AV_KEY = process.env.ALPHAVANTAGE_KEY || '';
+const TD_KEY = process.env.TWELVEDATA_KEY || '';
 
 app.use(cors());
 app.use(express.static(path.join(__dirname)));
 
-let cache = null;
-let cacheTime = 0;
-const CACHE_TTL = 60 * 1000;
+// Two separate caches:
+// 1. liveCache — intraday current price (TTL 60s)
+// 2. histCache — 52W high/low from daily data (TTL 1 hour)
+let liveCache = null;
+let liveCacheTime = 0;
+const LIVE_TTL = 60 * 1000; // 1 min
 
-async function fetchFromAlphaVantage() {
-  if (!AV_KEY) throw new Error('No Alpha Vantage key');
-  const url = `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=NSEI.BSE&outputsize=full&apikey=${AV_KEY}`;
-  const res = await axios.get(url, { timeout: 15000 });
-  const ts = res.data['Time Series (Daily)'];
-  if (!ts) throw new Error('AV: ' + (res.data['Note'] || res.data['Information'] || JSON.stringify(res.data)));
+let histCache = null;
+let histCacheTime = 0;
+const HIST_TTL = 60 * 60 * 1000; // 1 hour
 
-  const dates = Object.keys(ts).sort().reverse();
-  const latest = ts[dates[0]];
-  const prev   = ts[dates[1]];
+// ── LIVE PRICE: Twelve Data ──────────────────────────────────────────────────
+async function fetchLiveFromTwelveData() {
+  if (!TD_KEY) throw new Error('No Twelve Data key');
+  const url = `https://api.twelvedata.com/quote?symbol=NIFTY&exchange=NSE&apikey=${TD_KEY}`;
+  const res = await axios.get(url, { timeout: 10000 });
+  const d = res.data;
+  if (d.status === 'error' || d.code) throw new Error('TwelveData: ' + (d.message || JSON.stringify(d)));
 
-  const current   = parseFloat(latest['4. close']);
-  const prevClose = parseFloat(prev['4. close']);
+  const current   = parseFloat(d.close);
+  const prevClose = parseFloat(d.previous_close);
+  const open      = parseFloat(d.open);
+  const dayHigh   = parseFloat(d.high);
+  const dayLow    = parseFloat(d.low);
   const change    = parseFloat((current - prevClose).toFixed(2));
   const changePct = parseFloat(((change / prevClose) * 100).toFixed(2));
+  const isMarketOpen = d.is_market_open;
 
-  const yearDates = dates.slice(0, 252);
-  const high52 = Math.max(...yearDates.map(d => parseFloat(ts[d]['2. high'])));
-  const low52  = Math.min(...yearDates.map(d => parseFloat(ts[d]['3. low'])));
-
-  return {
-    current, change, changePct, high52, low52,
-    pctFromHigh: parseFloat(((high52 - current) / high52 * 100).toFixed(2)),
-    pctFromLow:  parseFloat(((current - low52)  / low52  * 100).toFixed(2)),
-    dayHigh:   parseFloat(latest['2. high']),
-    dayLow:    parseFloat(latest['3. low']),
-    open:      parseFloat(latest['1. open']),
-    prevClose,
-    source: 'alphavantage',
-    timestamp: new Date().toISOString(),
-  };
+  return { current, prevClose, open, dayHigh, dayLow, change, changePct, isMarketOpen, liveSource: 'twelvedata' };
 }
 
-async function fetchFromYahoo() {
+// ── LIVE PRICE FALLBACK: Yahoo Finance ───────────────────────────────────────
+async function fetchLiveFromYahoo() {
   const urls = [
-    'https://query1.finance.yahoo.com/v8/finance/chart/%5ENSEI?interval=1d&range=1y',
-    'https://query2.finance.yahoo.com/v8/finance/chart/%5ENSEI?interval=1d&range=1y',
+    'https://query1.finance.yahoo.com/v8/finance/chart/%5ENSEI?interval=1m&range=1d',
+    'https://query2.finance.yahoo.com/v8/finance/chart/%5ENSEI?interval=1m&range=1d',
   ];
   let lastErr;
   for (const url of urls) {
@@ -59,111 +55,174 @@ async function fetchFromYahoo() {
         timeout: 10000,
         headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json', 'Referer': 'https://finance.yahoo.com' },
       });
-      const result  = res.data.chart.result[0];
-      const meta    = result.meta;
-      const quotes  = result.indicators.quote[0];
-      const highs   = quotes.high.filter(Boolean);
-      const lows    = quotes.low.filter(Boolean);
+      const meta = res.data.chart.result[0].meta;
       const current   = meta.regularMarketPrice;
-      const high52    = Math.max(...highs);
-      const low52     = Math.min(...lows);
       const prevClose = meta.chartPreviousClose;
       const change    = parseFloat((current - prevClose).toFixed(2));
       const changePct = parseFloat(((change / prevClose) * 100).toFixed(2));
       return {
-        current, change, changePct, high52, low52,
-        pctFromHigh: parseFloat(((high52 - current) / high52 * 100).toFixed(2)),
-        pctFromLow:  parseFloat(((current - low52)  / low52  * 100).toFixed(2)),
-        dayHigh: meta.regularMarketDayHigh || current,
-        dayLow:  meta.regularMarketDayLow  || current,
-        open:    meta.regularMarketOpen    || current,
+        current,
         prevClose,
-        source: 'yahoo',
-        timestamp: new Date().toISOString(),
+        open:      meta.regularMarketOpen    || prevClose,
+        dayHigh:   meta.regularMarketDayHigh || current,
+        dayLow:    meta.regularMarketDayLow  || current,
+        change,
+        changePct,
+        isMarketOpen: meta.marketState === 'REGULAR',
+        liveSource: 'yahoo',
       };
-    } catch(e) { lastErr = e; await new Promise(r => setTimeout(r, 500)); }
+    } catch(e) { lastErr = e; await new Promise(r => setTimeout(r, 400)); }
   }
   throw lastErr;
 }
 
-async function fetchFromStooq() {
-  const url = 'https://stooq.com/q/d/l/?s=^nsei&i=d';
-  const res = await axios.get(url, {
+// ── HISTORICAL 52W: Alpha Vantage ────────────────────────────────────────────
+async function fetchHistFromAlphaVantage() {
+  if (!AV_KEY) throw new Error('No Alpha Vantage key');
+  const url = `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=NSEI.BSE&outputsize=full&apikey=${AV_KEY}`;
+  const res = await axios.get(url, { timeout: 15000 });
+  const ts = res.data['Time Series (Daily)'];
+  if (!ts) throw new Error('AV: ' + (res.data['Note'] || res.data['Information'] || 'No data'));
+
+  const dates     = Object.keys(ts).sort().reverse();
+  const yearDates = dates.slice(0, 252);
+  const high52    = Math.max(...yearDates.map(d => parseFloat(ts[d]['2. high'])));
+  const low52     = Math.min(...yearDates.map(d => parseFloat(ts[d]['3. low'])));
+  const prevClose = parseFloat(ts[dates[0]]['4. close']); // latest EOD close as fallback
+
+  return { high52, low52, prevClose, histSource: 'alphavantage' };
+}
+
+// ── HISTORICAL 52W FALLBACK: Stooq ───────────────────────────────────────────
+async function fetchHistFromStooq() {
+  const res = await axios.get('https://stooq.com/q/d/l/?s=^nsei&i=d', {
     timeout: 10000,
     headers: { 'User-Agent': 'Mozilla/5.0' },
   });
-
   const lines = res.data.trim().split('\n').filter(l => l.trim() && !l.startsWith('Date'));
   if (lines.length < 2) throw new Error('Stooq: not enough data');
 
-  // CSV: Date,Open,High,Low,Close,Volume
-  const parse = line => line.split(',').map(v => v.trim());
-  const last = parse(lines[lines.length - 1]);
-  const prev = parse(lines[lines.length - 2]);
-
-  const current   = parseFloat(last[4]);
-  const prevClose = parseFloat(prev[4]);
-  if (!current || !prevClose) throw new Error('Stooq: invalid close values');
-
-  const change    = parseFloat((current - prevClose).toFixed(2));
-  const changePct = parseFloat(((change / prevClose) * 100).toFixed(2));
+  const parse   = line => line.split(',').map(v => v.trim());
+  const last    = parse(lines[lines.length - 1]);
+  const prevClose = parseFloat(last[4]);
+  if (!prevClose) throw new Error('Stooq: invalid data');
 
   const yearLines = lines.slice(-252);
   const high52 = Math.max(...yearLines.map(l => parseFloat(parse(l)[2])).filter(Boolean));
   const low52  = Math.min(...yearLines.map(l => parseFloat(parse(l)[3])).filter(Boolean));
 
-  return {
-    current, change, changePct, high52, low52,
-    pctFromHigh: parseFloat(((high52 - current) / high52 * 100).toFixed(2)),
-    pctFromLow:  parseFloat(((current - low52)  / low52  * 100).toFixed(2)),
-    dayHigh: parseFloat(last[2]),
-    dayLow:  parseFloat(last[3]),
-    open:    parseFloat(last[1]),
-    prevClose,
-    source: 'stooq',
-    timestamp: new Date().toISOString(),
-  };
+  return { high52, low52, prevClose, histSource: 'stooq' };
 }
 
-app.get('/api/nifty', async (req, res) => {
-  if (cache && Date.now() - cacheTime < CACHE_TTL) {
-    return res.json({ ...cache, cached: true });
-  }
+// ── COMBINED FETCH ────────────────────────────────────────────────────────────
+async function getHistData() {
+  // Return cache if fresh
+  if (histCache && Date.now() - histCacheTime < HIST_TTL) return histCache;
 
-  const sources = [fetchFromAlphaVantage, fetchFromStooq, fetchFromYahoo];
-  const errors = [];
-
-  for (const fn of sources) {
+  const fns = [fetchHistFromAlphaVantage, fetchHistFromStooq];
+  for (const fn of fns) {
     try {
-      console.log(`Trying ${fn.name}...`);
       const data = await fn();
-      cache = data;
-      cacheTime = Date.now();
-      console.log(`Success: ${fn.name} | Nifty: ${data.current}`);
-      return res.json(data);
-    } catch(e) {
-      console.error(`Failed ${fn.name}: ${e.message}`);
-      errors.push(`${fn.name}: ${e.message}`);
-    }
+      histCache = data;
+      histCacheTime = Date.now();
+      console.log(`[hist] ${fn.name} OK — 52W H:${data.high52} L:${data.low52}`);
+      return data;
+    } catch(e) { console.error(`[hist] ${fn.name} failed: ${e.message}`); }
+  }
+  // Return stale hist cache rather than fail
+  if (histCache) { console.warn('[hist] all failed, using stale cache'); return { ...histCache, histStale: true }; }
+  throw new Error('Could not fetch 52W historical data');
+}
+
+async function getLiveData(fallbackPrevClose) {
+  // Return cache if fresh
+  if (liveCache && Date.now() - liveCacheTime < LIVE_TTL) return liveCache;
+
+  const fns = [fetchLiveFromTwelveData, fetchLiveFromYahoo];
+  for (const fn of fns) {
+    try {
+      const data = await fn();
+      liveCache = data;
+      liveCacheTime = Date.now();
+      console.log(`[live] ${fn.name} OK — price:${data.current} marketOpen:${data.isMarketOpen}`);
+      return data;
+    } catch(e) { console.error(`[live] ${fn.name} failed: ${e.message}`); }
   }
 
-  if (cache) {
-    console.warn('All failed, serving stale cache');
-    return res.json({ ...cache, stale: true });
+  // All live sources failed — build a fallback from hist prevClose
+  if (fallbackPrevClose) {
+    console.warn('[live] all failed, using prevClose as current');
+    return {
+      current: fallbackPrevClose,
+      prevClose: fallbackPrevClose,
+      open: fallbackPrevClose,
+      dayHigh: fallbackPrevClose,
+      dayLow: fallbackPrevClose,
+      change: 0,
+      changePct: 0,
+      isMarketOpen: false,
+      liveSource: 'prev_close_fallback',
+    };
   }
 
-  res.status(500).json({ error: 'All sources failed', details: errors });
+  // Return stale live cache
+  if (liveCache) { console.warn('[live] all failed, using stale live cache'); return { ...liveCache, liveStale: true }; }
+  throw new Error('Could not fetch live price');
+}
+
+// ── MAIN API ──────────────────────────────────────────────────────────────────
+app.get('/api/nifty', async (req, res) => {
+  try {
+    // Fetch hist and live in parallel for speed
+    const [hist, live] = await Promise.all([
+      getHistData(),
+      getLiveData(null),
+    ]).catch(async () => {
+      // If parallel fails, try sequentially
+      const h = await getHistData();
+      const l = await getLiveData(h.prevClose);
+      return [h, l];
+    });
+
+    const { high52, low52, histSource, histStale } = hist;
+    const { current, prevClose, open, dayHigh, dayLow, change, changePct, isMarketOpen, liveSource, liveStale } = live;
+
+    const pctFromHigh = parseFloat(((high52 - current) / high52 * 100).toFixed(2));
+    const pctFromLow  = parseFloat(((current - low52)  / low52  * 100).toFixed(2));
+
+    res.json({
+      current, prevClose, open, dayHigh, dayLow,
+      change: parseFloat((current - prevClose).toFixed(2)),
+      changePct: parseFloat(((current - prevClose) / prevClose * 100).toFixed(2)),
+      high52, low52,
+      pctFromHigh: Math.max(0, pctFromHigh), // never negative display
+      pctFromLow:  Math.max(0, pctFromLow),
+      isMarketOpen,
+      liveSource,
+      histSource,
+      liveStale: !!liveStale,
+      histStale: !!histStale,
+      timestamp: new Date().toISOString(),
+    });
+
+  } catch(e) {
+    console.error('[api/nifty] fatal:', e.message);
+    res.status(500).json({ error: e.message });
+  }
 });
 
 app.get('/api/health', (req, res) => res.json({
   status: 'ok',
-  cached: !!cache,
-  source: cache?.source,
-  nifty: cache?.current,
-  cacheAge: cache ? Math.round((Date.now() - cacheTime) / 1000) + 's' : null,
+  liveCache: !!liveCache,
+  histCache: !!histCache,
+  liveSource: liveCache?.liveSource,
+  histSource: histCache?.histSource,
+  liveCacheAge: liveCache ? Math.round((Date.now() - liveCacheTime) / 1000) + 's' : null,
+  histCacheAge: histCache ? Math.round((Date.now() - histCacheTime) / 60000) + 'min' : null,
+  tdKeyConfigured: !!TD_KEY,
   avKeyConfigured: !!AV_KEY,
 }));
 
 app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 
-app.listen(PORT, () => console.log(`Nifty Tracker running on port ${PORT}`));
+app.listen(PORT, () => console.log(`✅ Nifty Tracker running on port ${PORT}`));
